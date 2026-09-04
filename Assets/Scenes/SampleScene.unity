@@ -704,8 +704,8 @@ MonoBehaviour:
   wrongDamageToPlayer: 15
   missDamageToPlayer: 10
   firstNoteDelay: 2
-  minNoteInterval: 2
-  maxNoteInterval: 4.5
+  minNoteInterval: 0.8
+  maxNoteInterval: 3
   noteTravelTime: 2
   notesAhead: 8
   perfectWindow: 0.07
