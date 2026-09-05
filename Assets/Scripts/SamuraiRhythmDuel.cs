@@ -16,6 +16,7 @@ public class SamuraiRhythmDuel : MonoBehaviour
 {
     private enum DuelState
     {
+        Countdown,
         Playing,
         Won,
         Lost
@@ -64,6 +65,27 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
     [Tooltip("Cantidad de notas que mantenemos programadas.")]
     [SerializeField] private int notesAhead = 8;
+
+    // =====================================================
+    // PROGRESSIVE DIFFICULTY
+    // =====================================================
+
+    [Header("Progressive Difficulty")]
+
+    [Tooltip("Cada cuántos enemigos derrotados aumenta la velocidad.")]
+    [SerializeField] private int enemiesPerSpeedIncrease = 2;
+
+    [Tooltip("Cuántos segundos se reduce el tiempo de viaje por cada aumento de dificultad.")]
+    [SerializeField] private float travelTimeReductionPerTier = 0.15f;
+
+    [Tooltip("Límite mínimo del tiempo de viaje. Cuanto menor, más rápida la nota.")]
+    [SerializeField] private float minimumNoteTravelTime = 0.8f;
+
+    [Tooltip("Opcional: muestra el número del enemigo actual.")]
+    [SerializeField] private TMP_Text enemyCounterText;
+
+    [Tooltip("Opcional: muestra el nivel de velocidad actual para debug/balance.")]
+    [SerializeField] private TMP_Text difficultyText;
 
     // =====================================================
     // TIMING WINDOWS
@@ -116,6 +138,21 @@ public class SamuraiRhythmDuel : MonoBehaviour
     [SerializeField] private float feedbackDuration = 0.5f;
 
     // =====================================================
+    // COUNTDOWN
+    // =====================================================
+
+    [Header("Countdown")]
+
+    [Tooltip("Texto grande para mostrar 3, 2, 1, ¡YA!")]
+    [SerializeField] private TMP_Text countdownText;
+
+    [Tooltip("Duración de cada número de la cuenta regresiva.")]
+    [SerializeField] private float countdownStepDuration = 0.8f;
+
+    [Tooltip("Tiempo que permanece ¡YA! antes de comenzar a mover las notas.")]
+    [SerializeField] private float goDuration = 0.45f;
+
+    // =====================================================
     // ROUND
     // =====================================================
 
@@ -144,6 +181,12 @@ public class SamuraiRhythmDuel : MonoBehaviour
     private float restartTimer;
     private float feedbackTimer;
 
+    private float countdownTimer;
+    private int countdownValue;
+
+    private int enemiesDefeated;
+    private float currentNoteTravelTime;
+
     private DuelState currentState;
 
     private readonly List<NoteData> notes =
@@ -155,6 +198,7 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
     private void Start()
     {
+        enemiesDefeated = 0;
         StartDuel();
     }
 
@@ -162,21 +206,30 @@ public class SamuraiRhythmDuel : MonoBehaviour
     {
         UpdateFeedback();
 
-        if (currentState == DuelState.Playing)
+        switch (currentState)
         {
-            duelTimer += Time.deltaTime;
+            case DuelState.Countdown:
+                UpdateCountdown();
+                break;
 
-            UpdateNotes();
-            ProcessMissedNotes();
+            case DuelState.Playing:
+                duelTimer += Time.deltaTime;
 
-            if (enableKeyboardInput)
-            {
-                ReadKeyboardInput();
-            }
-        }
-        else
-        {
-            UpdateFinishedDuel();
+                UpdateNotes();
+
+                // Damos prioridad al input del jugador antes de marcar MISS.
+                if (enableKeyboardInput)
+                {
+                    ReadKeyboardInput();
+                }
+
+                ProcessMissedNotes();
+                break;
+
+            case DuelState.Won:
+            case DuelState.Lost:
+                UpdateFinishedDuel();
+                break;
         }
     }
 
@@ -193,14 +246,125 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
         duelTimer = 0f;
 
-        currentState = DuelState.Playing;
-
+        UpdateDifficulty();
         UpdateHealthUI();
+        UpdateProgressUI();
 
-        feedbackText.text = "";
+        if (feedbackText != null)
+        {
+            feedbackText.text = "";
+        }
+
         feedbackTimer = 0f;
 
+        BeginCountdown();
+    }
+
+    // =====================================================
+    // COUNTDOWN
+    // =====================================================
+
+    private void BeginCountdown()
+    {
+        currentState = DuelState.Countdown;
+
+        countdownValue = 3;
+        countdownTimer = countdownStepDuration;
+
+        if (countdownText != null)
+        {
+            countdownText.gameObject.SetActive(true);
+            countdownText.text = "3";
+        }
+    }
+
+    private void UpdateCountdown()
+    {
+        countdownTimer -= Time.deltaTime;
+
+        if (countdownTimer > 0f)
+            return;
+
+        if (countdownValue > 1)
+        {
+            countdownValue--;
+            countdownTimer = countdownStepDuration;
+
+            if (countdownText != null)
+            {
+                countdownText.text = countdownValue.ToString();
+            }
+
+            return;
+        }
+
+        if (countdownValue == 1)
+        {
+            countdownValue = 0;
+            countdownTimer = goDuration;
+
+            if (countdownText != null)
+            {
+                countdownText.text = "¡YA!";
+            }
+
+            return;
+        }
+
+        StartGameplayAfterCountdown();
+    }
+
+    private void StartGameplayAfterCountdown()
+    {
+        if (countdownText != null)
+        {
+            countdownText.gameObject.SetActive(false);
+        }
+
+        duelTimer = 0f;
+        currentState = DuelState.Playing;
+
         GenerateInitialNotes();
+    }
+
+    // =====================================================
+    // PROGRESSIVE DIFFICULTY
+    // =====================================================
+
+    private void UpdateDifficulty()
+    {
+        int safeEnemiesPerIncrease =
+            Mathf.Max(1, enemiesPerSpeedIncrease);
+
+        int difficultyTier =
+            enemiesDefeated / safeEnemiesPerIncrease;
+
+        currentNoteTravelTime = Mathf.Max(
+            minimumNoteTravelTime,
+            noteTravelTime -
+            (difficultyTier * travelTimeReductionPerTier)
+        );
+    }
+
+    private void UpdateProgressUI()
+    {
+        if (enemyCounterText != null)
+        {
+            enemyCounterText.text =
+                $"ENEMIGO {enemiesDefeated + 1}";
+        }
+
+        if (difficultyText != null)
+        {
+            int safeEnemiesPerIncrease =
+                Mathf.Max(1, enemiesPerSpeedIncrease);
+
+            int difficultyTier =
+                enemiesDefeated / safeEnemiesPerIncrease;
+
+            difficultyText.text =
+                $"VEL. {difficultyTier + 1}  |  {currentNoteTravelTime:0.00}s";
+        }
     }
 
     // =====================================================
@@ -227,7 +391,7 @@ public class SamuraiRhythmDuel : MonoBehaviour
         {
             newTime =
                 duelTimer +
-                noteTravelTime +
+                currentNoteTravelTime +
                 GetRandomInterval();
         }
         else
@@ -280,7 +444,7 @@ public class SamuraiRhythmDuel : MonoBehaviour
             // La nota todavía está demasiado lejos.
             if (
                 note.view == null &&
-                timeUntilHit <= noteTravelTime
+                timeUntilHit <= currentNoteTravelTime
             )
             {
                 SpawnNoteView(note);
@@ -291,7 +455,7 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
             float progress =
                 1f -
-                (timeUntilHit / noteTravelTime);
+                (timeUntilHit / currentNoteTravelTime);
 
             note.view.SetPosition(
                 spawnPoint.anchoredPosition,
@@ -568,6 +732,9 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
     private void WinDuel()
     {
+        // Solo una victoria real hace avanzar la dificultad.
+        enemiesDefeated++;
+
         currentState =
             DuelState.Won;
 
@@ -764,5 +931,24 @@ public class SamuraiRhythmDuel : MonoBehaviour
                 2,
                 notesAhead
             );
+
+        enemiesPerSpeedIncrease =
+            Mathf.Max(1, enemiesPerSpeedIncrease);
+
+        travelTimeReductionPerTier =
+            Mathf.Max(0f, travelTimeReductionPerTier);
+
+        minimumNoteTravelTime =
+            Mathf.Clamp(
+                minimumNoteTravelTime,
+                0.1f,
+                noteTravelTime
+            );
+
+        countdownStepDuration =
+            Mathf.Max(0.05f, countdownStepDuration);
+
+        goDuration =
+            Mathf.Max(0.05f, goDuration);
     }
 }
