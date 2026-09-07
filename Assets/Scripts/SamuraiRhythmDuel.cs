@@ -41,75 +41,36 @@ public class SamuraiRhythmDuel : MonoBehaviour
     [SerializeField] private float missDamageToPlayer = 10f;
 
     [Header("Enemy 1 - Single Notes")]
-    [Tooltip("Tiempo de espera después de ¡YA! antes de que aparezca la primera nota.")]
     [SerializeField] private float firstNoteDelay = 0.65f;
-
-    [Tooltip("Pausa mínima entre una nota individual y la siguiente.")]
     [SerializeField] private float minSingleNotePause = 0.45f;
-
-    [Tooltip("Pausa máxima entre una nota individual y la siguiente.")]
     [SerializeField] private float maxSingleNotePause = 0.90f;
 
     [Header("Bursts - Enemy 2+")]
-    [Tooltip("Número de enemigo a partir del cual aparecen ráfagas.")]
     [SerializeField] private int burstStartEnemy = 2;
-
-    [Tooltip("Cantidad mínima de notas que aparecen juntas.")]
     [SerializeField] private int minNotesPerBurst = 2;
-
-    [Tooltip("Cantidad máxima de notas que aparecen juntas.")]
     [SerializeField] private int maxNotesPerBurst = 4;
-
-    [Tooltip("Separación temporal mínima entre las notas de una misma ráfaga.")]
     [SerializeField] private float minBurstNoteInterval = 0.38f;
-
-    [Tooltip("Separación temporal máxima entre las notas de una misma ráfaga.")]
     [SerializeField] private float maxBurstNoteInterval = 0.48f;
-
-    [Tooltip("Tiempo mínimo para reaccionar a la primera nota de una ráfaga.")]
     [SerializeField] private float minimumBurstReactionTime = 0.75f;
-
-    [Tooltip("Pausa mínima después de que termina una ráfaga antes de que aparezca la siguiente.")]
     [SerializeField] private float minPauseBetweenBursts = 0.45f;
-
-    [Tooltip("Pausa máxima después de que termina una ráfaga antes de que aparezca la siguiente.")]
     [SerializeField] private float maxPauseBetweenBursts = 0.85f;
 
     [Header("Progressive Difficulty")]
-    [Tooltip("Tiempo de viaje inicial de una nota desde SpawnPoint hasta HitPoint.")]
     [SerializeField] private float noteTravelTime = 2.60f;
-
-    [Tooltip("Cada cuántos enemigos derrotados aumenta la velocidad.")]
     [SerializeField] private int enemiesPerSpeedIncrease = 2;
-
-    [Tooltip("Cuántos segundos se reduce el tiempo de viaje por cada aumento de dificultad.")]
     [SerializeField] private float travelTimeReductionPerTier = 0.12f;
-
-    [Tooltip("Límite mínimo del tiempo de viaje.")]
     [SerializeField] private float minimumNoteTravelTime = 2.00f;
-
-    [Tooltip("Opcional: muestra el número del enemigo actual.")]
     [SerializeField] private TMP_Text enemyCounterText;
-
-    [Tooltip("Opcional: muestra datos de dificultad para debug.")]
     [SerializeField] private TMP_Text difficultyText;
 
     [Header("Timing Windows")]
-    [Tooltip("Ventana PERFECT en segundos.")]
     [SerializeField] private float perfectWindow = 0.07f;
-
-    [Tooltip("Ventana GOOD en segundos.")]
     [SerializeField] private float goodWindow = 0.16f;
 
     [Header("Rhythm Lane")]
     [SerializeField] private RectTransform notesContainer;
-
-    [Tooltip("Lugar donde aparecen las notas.")]
     [SerializeField] private RectTransform spawnPoint;
-
-    [Tooltip("Lugar exacto donde debemos tocar.")]
     [SerializeField] private RectTransform hitPoint;
-
     [SerializeField] private RhythmNoteView notePrefab;
 
     [Header("Health UI")]
@@ -121,21 +82,19 @@ public class SamuraiRhythmDuel : MonoBehaviour
     [SerializeField] private float feedbackDuration = 0.5f;
 
     [Header("Countdown")]
-    [Tooltip("Texto grande para mostrar 3, 2, 1, ¡YA!")]
     [SerializeField] private TMP_Text countdownText;
-
-    [Tooltip("Duración de cada número.")]
     [SerializeField] private float countdownStepDuration = 0.8f;
-
-    [Tooltip("Tiempo que permanece ¡YA! antes de comenzar.")]
     [SerializeField] private float goDuration = 0.45f;
+
+    [Header("Juiciness")]
+    [Tooltip("Controlador opcional de feedback visual. Si queda vacÃ­o, el gameplay sigue funcionando.")]
+    [SerializeField] private RhythmJuiceController juiceController;
 
     [Header("Round")]
     [SerializeField] private bool autoRestart = true;
     [SerializeField] private float restartDelay = 2f;
 
     [Header("PC Debug")]
-    [Tooltip("Permite usar 1,2,3,4 en teclado.")]
     [SerializeField] private bool enableKeyboardInput = true;
 
     private float playerHealth;
@@ -150,14 +109,11 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
     private int enemiesDefeated;
     private float currentNoteTravelTime;
-
-    // ÚNICO reloj encargado de decidir cuándo aparece el próximo grupo.
     private float nextGroupSpawnTime;
 
     private DuelState currentState;
 
-    private readonly List<NoteData> notes =
-        new List<NoteData>();
+    private readonly List<NoteData> notes = new List<NoteData>();
 
     private void Start()
     {
@@ -181,7 +137,6 @@ public class SamuraiRhythmDuel : MonoBehaviour
                 UpdateGroupGenerator();
                 UpdateNotes();
 
-                // Input antes de MISS para favorecer al jugador en el frame límite.
                 if (enableKeyboardInput)
                 {
                     ReadKeyboardInput();
@@ -208,8 +163,10 @@ public class SamuraiRhythmDuel : MonoBehaviour
         nextGroupSpawnTime = 0f;
 
         UpdateDifficulty();
-        UpdateHealthUI();
+        SetHealthUIImmediate();
         UpdateProgressUI();
+
+        juiceController?.ResetVisuals();
 
         if (feedbackText != null)
         {
@@ -266,7 +223,7 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
             if (countdownText != null)
             {
-                countdownText.text = "¡YA!";
+                countdownText.text = "Â¡YA!";
             }
 
             return;
@@ -284,9 +241,6 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
         duelTimer = 0f;
         currentState = DuelState.Playing;
-
-        // Ya no existe GenerateInitialNotes().
-        // El grupo aparece completo cuando llega este momento.
         nextGroupSpawnTime = firstNoteDelay;
     }
 
@@ -296,16 +250,12 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
     private void UpdateDifficulty()
     {
-        int safeEnemiesPerIncrease =
-            Mathf.Max(1, enemiesPerSpeedIncrease);
-
-        int difficultyTier =
-            enemiesDefeated / safeEnemiesPerIncrease;
+        int safeEnemiesPerIncrease = Mathf.Max(1, enemiesPerSpeedIncrease);
+        int difficultyTier = enemiesDefeated / safeEnemiesPerIncrease;
 
         currentNoteTravelTime = Mathf.Max(
             minimumNoteTravelTime,
-            noteTravelTime -
-            (difficultyTier * travelTimeReductionPerTier)
+            noteTravelTime - (difficultyTier * travelTimeReductionPerTier)
         );
     }
 
@@ -315,21 +265,17 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
         if (enemyCounterText != null)
         {
-            enemyCounterText.text =
-                $"ENEMIGO {currentEnemy}";
+            enemyCounterText.text = $"ENEMIGO {currentEnemy}";
         }
 
         if (difficultyText != null)
         {
-            int safeEnemiesPerIncrease =
-                Mathf.Max(1, enemiesPerSpeedIncrease);
-
-            int difficultyTier =
-                enemiesDefeated / safeEnemiesPerIncrease;
+            int safeEnemiesPerIncrease = Mathf.Max(1, enemiesPerSpeedIncrease);
+            int difficultyTier = enemiesDefeated / safeEnemiesPerIncrease;
 
             string generationMode =
                 currentEnemy >= burstStartEnemy
-                    ? $"RÁFAGA {minNotesPerBurst}-{maxNotesPerBurst}"
+                    ? $"RÃFAGA {minNotesPerBurst}-{maxNotesPerBurst}"
                     : "SIMPLE";
 
             difficultyText.text =
@@ -338,7 +284,7 @@ public class SamuraiRhythmDuel : MonoBehaviour
     }
 
     // =====================================================
-    // GROUP GENERATOR
+    // NOTE GROUP GENERATION
     // =====================================================
 
     private void UpdateGroupGenerator()
@@ -358,62 +304,35 @@ public class SamuraiRhythmDuel : MonoBehaviour
         }
     }
 
-    // ENEMY 1
     private void SpawnSingleNoteGroup()
     {
-        float targetTime =
-            duelTimer + currentNoteTravelTime;
+        float targetTime = duelTimer + currentNoteTravelTime;
 
         CreateAndSpawnNote(targetTime);
 
-        float pause =
-            Random.Range(
-                minSingleNotePause,
-                maxSingleNotePause
-            );
+        float pause = Random.Range(
+            minSingleNotePause,
+            maxSingleNotePause
+        );
 
-        // La siguiente nota no aparece hasta que ésta terminó.
-        nextGroupSpawnTime =
-            targetTime + pause;
+        nextGroupSpawnTime = targetTime + pause;
     }
 
-    // ENEMY 2+
     private void SpawnBurstGroup()
     {
-        int amount =
-            Random.Range(
-                minNotesPerBurst,
-                maxNotesPerBurst + 1
-            );
+        int amount = Random.Range(
+            minNotesPerBurst,
+            maxNotesPerBurst + 1
+        );
 
         amount = Mathf.Clamp(amount, 2, 4);
 
-        /*
-         * ESTA ES LA DIFERENCIA CLAVE:
-         *
-         * Las 2-4 notas se instancian AHORA, dentro de este mismo método
-         * y por lo tanto en el mismo frame.
-         *
-         * La última queda en SpawnPoint.
-         * Las anteriores aparecen adelantadas en la pista.
-         *
-         * Ejemplo:
-         *
-         * HIT                           SPAWN
-         *  |          [3] [1] [4] [2]    |
-         * ------------------------------------------------
-         */
+        float configuredInterval = Random.Range(
+            minBurstNoteInterval,
+            maxBurstNoteInterval
+        );
 
-        float configuredInterval =
-            Random.Range(
-                minBurstNoteInterval,
-                maxBurstNoteInterval
-            );
-
-        // Garantizamos que la primera nota nunca aparezca demasiado
-        // cerca de la HitZone cuando la velocidad aumenta.
-        float maxSafeInterval =
-            configuredInterval;
+        float maxSafeInterval = configuredInterval;
 
         if (amount > 1)
         {
@@ -421,42 +340,34 @@ public class SamuraiRhythmDuel : MonoBehaviour
                 (currentNoteTravelTime - minimumBurstReactionTime) /
                 (amount - 1);
 
-            maxSafeInterval =
-                Mathf.Max(0.12f, maxSafeInterval);
+            maxSafeInterval = Mathf.Max(0.12f, maxSafeInterval);
         }
 
-        float burstInterval =
-            Mathf.Min(
-                configuredInterval,
-                maxSafeInterval
-            );
+        float burstInterval = Mathf.Min(
+            configuredInterval,
+            maxSafeInterval
+        );
 
         for (int i = 0; i < amount; i++)
         {
-            int notesAfterThis =
-                amount - 1 - i;
+            int notesAfterThis = amount - 1 - i;
 
             float targetTime =
                 duelTimer +
                 currentNoteTravelTime -
                 (notesAfterThis * burstInterval);
 
-            // La vista se instancia INMEDIATAMENTE.
             CreateAndSpawnNote(targetTime);
         }
 
-        float lastTargetTime =
-            duelTimer + currentNoteTravelTime;
+        float lastTargetTime = duelTimer + currentNoteTravelTime;
 
-        float pause =
-            Random.Range(
-                minPauseBetweenBursts,
-                maxPauseBetweenBursts
-            );
+        float pause = Random.Range(
+            minPauseBetweenBursts,
+            maxPauseBetweenBursts
+        );
 
-        // Por default no superponemos dos ráfagas.
-        nextGroupSpawnTime =
-            lastTargetTime + pause;
+        nextGroupSpawnTime = lastTargetTime + pause;
     }
 
     // =====================================================
@@ -465,35 +376,27 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
     private void CreateAndSpawnNote(float targetTime)
     {
-        NoteData note =
-            new NoteData();
+        NoteData note = new NoteData
+        {
+            targetTime = targetTime,
+            attackType = (AttackType)Random.Range(1, 5)
+        };
 
-        note.targetTime = targetTime;
-
-        note.attackType =
-            (AttackType)Random.Range(1, 5);
-
-        RhythmNoteView newView =
-            Instantiate(
-                notePrefab,
-                notesContainer
-            );
-
-        newView.Setup(
-            note.attackType
+        RhythmNoteView newView = Instantiate(
+            notePrefab,
+            notesContainer
         );
+
+        newView.Setup(note.attackType);
 
         note.view = newView;
 
         notes.Add(note);
 
-        // El input siempre evalúa notes[0], por eso debe estar ordenada.
         notes.Sort(
-            (a, b) =>
-                a.targetTime.CompareTo(b.targetTime)
+            (a, b) => a.targetTime.CompareTo(b.targetTime)
         );
 
-        // Hace que la ráfaga completa sea visible en ESTE frame.
         UpdateSingleNotePosition(note);
     }
 
@@ -510,8 +413,7 @@ public class SamuraiRhythmDuel : MonoBehaviour
         if (note.view == null)
             return;
 
-        float timeUntilHit =
-            note.targetTime - duelTimer;
+        float timeUntilHit = note.targetTime - duelTimer;
 
         float progress =
             1f -
@@ -550,65 +452,61 @@ public class SamuraiRhythmDuel : MonoBehaviour
         float absoluteOffset =
             Mathf.Abs(timingOffset);
 
+        // EARLY
         if (timingOffset < -goodWindow)
         {
-            DamagePlayer(
-                earlyDamageToPlayer
-            );
+            ConsumeCurrentNoteError();
+
+            DamagePlayer(earlyDamageToPlayer);
 
             ShowFeedback("EARLY!");
-            ConsumeCurrentNote();
+            juiceController?.PlayErrorFeedback();
             return;
         }
 
-        if (
-            pressedAttack !=
-            currentNote.attackType
-        )
+        // WRONG
+        if (pressedAttack != currentNote.attackType)
         {
-            DamagePlayer(
-                wrongDamageToPlayer
-            );
+            ConsumeCurrentNoteError();
+
+            DamagePlayer(wrongDamageToPlayer);
 
             ShowFeedback("WRONG!");
-            ConsumeCurrentNote();
+            juiceController?.PlayErrorFeedback();
             return;
         }
 
-        if (
-            absoluteOffset <=
-            perfectWindow
-        )
+        // PERFECT
+        if (absoluteOffset <= perfectWindow)
         {
-            DamageEnemy(
-                perfectDamage
-            );
+            ConsumeCurrentNoteSuccess(true);
+
+            DamageEnemy(perfectDamage, true);
 
             ShowFeedback("PERFECT!");
-            ConsumeCurrentNote();
+            juiceController?.PlayPerfectFeedback();
             return;
         }
 
-        if (
-            absoluteOffset <=
-            goodWindow
-        )
+        // GOOD
+        if (absoluteOffset <= goodWindow)
         {
-            DamageEnemy(
-                goodDamage
-            );
+            ConsumeCurrentNoteSuccess(false);
+
+            DamageEnemy(goodDamage, false);
 
             ShowFeedback("GOOD!");
-            ConsumeCurrentNote();
+            juiceController?.PlayGoodFeedback();
             return;
         }
 
-        DamagePlayer(
-            missDamageToPlayer
-        );
+        // LATE
+        ConsumeCurrentNoteError();
+
+        DamagePlayer(missDamageToPlayer);
 
         ShowFeedback("MISS!");
-        ConsumeCurrentNote();
+        juiceController?.PlayErrorFeedback();
     }
 
     private void ProcessMissedNotes()
@@ -622,58 +520,68 @@ public class SamuraiRhythmDuel : MonoBehaviour
             DuelState.Playing
         )
         {
-            DamagePlayer(
-                missDamageToPlayer
-            );
+            ConsumeCurrentNoteError();
+
+            DamagePlayer(missDamageToPlayer);
 
             ShowFeedback("MISS!");
-            ConsumeCurrentNote();
+            juiceController?.PlayErrorFeedback();
         }
     }
 
-    private void ConsumeCurrentNote()
+    private void ConsumeCurrentNoteSuccess(bool perfect)
     {
         if (notes.Count == 0)
             return;
 
-        NoteData note =
-            notes[0];
+        NoteData note = notes[0];
+        notes.RemoveAt(0);
 
         if (note.view != null)
         {
-            Destroy(
-                note.view.gameObject
-            );
+            note.view.PlaySuccessAndDestroy(perfect);
         }
+    }
 
+    private void ConsumeCurrentNoteError()
+    {
+        if (notes.Count == 0)
+            return;
+
+        NoteData note = notes[0];
         notes.RemoveAt(0);
 
-        /*
-         * MUY IMPORTANTE:
-         *
-         * NO llamamos GenerateNextNote().
-         * NO generamos otra nota al acertar/fallar.
-         *
-         * La generación es independiente del input.
-         * UpdateGroupGenerator() crea el próximo grupo completo.
-         */
+        if (note.view != null)
+        {
+            note.view.PlayErrorAndDestroy();
+        }
     }
 
     // =====================================================
-    // HEALTH / RESULTS
+    // DAMAGE / HEALTH
     // =====================================================
 
-    private void DamageEnemy(float damage)
+    private void DamageEnemy(float damage, bool perfect)
     {
         enemyHealth -= damage;
+        enemyHealth = Mathf.Max(enemyHealth, 0f);
 
-        enemyHealth =
-            Mathf.Max(
-                enemyHealth,
-                0f
+        if (juiceController != null)
+        {
+            juiceController.AnimateHealth(
+                enemyHealthSlider,
+                enemyHealth
             );
 
-        UpdateHealthUI();
+            juiceController.PlayEnemyDamage(
+                damage,
+                perfect
+            );
+        }
+        else
+        {
+            SetSliderValue(enemyHealthSlider, enemyHealth);
+        }
 
         if (enemyHealth <= 0f)
         {
@@ -684,14 +592,23 @@ public class SamuraiRhythmDuel : MonoBehaviour
     private void DamagePlayer(float damage)
     {
         playerHealth -= damage;
+        playerHealth = Mathf.Max(playerHealth, 0f);
 
-        playerHealth =
-            Mathf.Max(
-                playerHealth,
-                0f
+        if (juiceController != null)
+        {
+            juiceController.AnimateHealth(
+                playerHealthSlider,
+                playerHealth
             );
 
-        UpdateHealthUI();
+            juiceController.PlayPlayerDamage(
+                damage
+            );
+        }
+        else
+        {
+            SetSliderValue(playerHealthSlider, playerHealth);
+        }
 
         if (playerHealth <= 0f)
         {
@@ -699,47 +616,63 @@ public class SamuraiRhythmDuel : MonoBehaviour
         }
     }
 
-    private void UpdateHealthUI()
+    private void SetHealthUIImmediate()
     {
         if (playerHealthSlider != null)
         {
-            playerHealthSlider.maxValue =
-                playerMaxHealth;
-
-            playerHealthSlider.value =
-                playerHealth;
+            playerHealthSlider.maxValue = playerMaxHealth;
         }
 
         if (enemyHealthSlider != null)
         {
-            enemyHealthSlider.maxValue =
-                enemyMaxHealth;
+            enemyHealthSlider.maxValue = enemyMaxHealth;
+        }
 
-            enemyHealthSlider.value =
-                enemyHealth;
+        if (juiceController != null)
+        {
+            juiceController.SetHealthImmediate(
+                playerHealthSlider,
+                playerHealth
+            );
+
+            juiceController.SetHealthImmediate(
+                enemyHealthSlider,
+                enemyHealth
+            );
+        }
+        else
+        {
+            SetSliderValue(playerHealthSlider, playerHealth);
+            SetSliderValue(enemyHealthSlider, enemyHealth);
         }
     }
+
+    private void SetSliderValue(Slider slider, float value)
+    {
+        if (slider != null)
+        {
+            slider.value = value;
+        }
+    }
+
+    // =====================================================
+    // RESULTS
+    // =====================================================
 
     private void WinDuel()
     {
         enemiesDefeated++;
 
-        currentState =
-            DuelState.Won;
-
-        restartTimer =
-            restartDelay;
+        currentState = DuelState.Won;
+        restartTimer = restartDelay;
 
         ShowFeedback("VICTORY!");
     }
 
     private void LoseDuel()
     {
-        currentState =
-            DuelState.Lost;
-
-        restartTimer =
-            restartDelay;
+        currentState = DuelState.Lost;
+        restartTimer = restartDelay;
 
         ShowFeedback("DEFEAT!");
     }
@@ -749,8 +682,7 @@ public class SamuraiRhythmDuel : MonoBehaviour
         if (!autoRestart)
             return;
 
-        restartTimer -=
-            Time.deltaTime;
+        restartTimer -= Time.deltaTime;
 
         if (restartTimer <= 0f)
         {
@@ -759,21 +691,16 @@ public class SamuraiRhythmDuel : MonoBehaviour
     }
 
     // =====================================================
-    // FEEDBACK
+    // FEEDBACK TEXT
     // =====================================================
 
-    private void ShowFeedback(
-        string message
-    )
+    private void ShowFeedback(string message)
     {
         if (feedbackText == null)
             return;
 
-        feedbackText.text =
-            message;
-
-        feedbackTimer =
-            feedbackDuration;
+        feedbackText.text = message;
+        feedbackTimer = feedbackDuration;
     }
 
     private void UpdateFeedback()
@@ -781,20 +708,16 @@ public class SamuraiRhythmDuel : MonoBehaviour
         if (feedbackTimer <= 0f)
             return;
 
-        feedbackTimer -=
-            Time.deltaTime;
+        feedbackTimer -= Time.deltaTime;
 
-        if (feedbackTimer <= 0f)
+        if (feedbackTimer <= 0f && feedbackText != null)
         {
-            if (feedbackText != null)
-            {
-                feedbackText.text = "";
-            }
+            feedbackText.text = "";
         }
     }
 
     // =====================================================
-    // KEYBOARD
+    // KEYBOARD DEBUG
     // =====================================================
 
     private void ReadKeyboardInput()
@@ -802,48 +725,24 @@ public class SamuraiRhythmDuel : MonoBehaviour
         if (Keyboard.current == null)
             return;
 
-        if (
-            Keyboard.current
-            .digit1Key
-            .wasPressedThisFrame
-        )
+        if (Keyboard.current.digit1Key.wasPressedThisFrame)
         {
-            PressAttack(
-                AttackType.Attack1
-            );
+            PressAttack(AttackType.Attack1);
         }
 
-        if (
-            Keyboard.current
-            .digit2Key
-            .wasPressedThisFrame
-        )
+        if (Keyboard.current.digit2Key.wasPressedThisFrame)
         {
-            PressAttack(
-                AttackType.Attack2
-            );
+            PressAttack(AttackType.Attack2);
         }
 
-        if (
-            Keyboard.current
-            .digit3Key
-            .wasPressedThisFrame
-        )
+        if (Keyboard.current.digit3Key.wasPressedThisFrame)
         {
-            PressAttack(
-                AttackType.Attack3
-            );
+            PressAttack(AttackType.Attack3);
         }
 
-        if (
-            Keyboard.current
-            .digit4Key
-            .wasPressedThisFrame
-        )
+        if (Keyboard.current.digit4Key.wasPressedThisFrame)
         {
-            PressAttack(
-                AttackType.Attack4
-            );
+            PressAttack(AttackType.Attack4);
         }
     }
 
@@ -853,9 +752,7 @@ public class SamuraiRhythmDuel : MonoBehaviour
         {
             if (note.view != null)
             {
-                Destroy(
-                    note.view.gameObject
-                );
+                Destroy(note.view.gameObject);
             }
         }
 
@@ -902,133 +799,88 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
     private void OnValidate()
     {
-        playerMaxHealth =
-            Mathf.Max(
-                1f,
-                playerMaxHealth
-            );
+        playerMaxHealth = Mathf.Max(1f, playerMaxHealth);
+        enemyMaxHealth = Mathf.Max(1f, enemyMaxHealth);
 
-        enemyMaxHealth =
-            Mathf.Max(
-                1f,
-                enemyMaxHealth
-            );
+        perfectWindow = Mathf.Max(0.01f, perfectWindow);
+        goodWindow = Mathf.Max(perfectWindow, goodWindow);
 
-        perfectWindow =
-            Mathf.Max(
-                0.01f,
-                perfectWindow
-            );
+        firstNoteDelay = Mathf.Max(0f, firstNoteDelay);
 
-        goodWindow =
-            Mathf.Max(
-                perfectWindow,
-                goodWindow
-            );
+        minSingleNotePause = Mathf.Max(0f, minSingleNotePause);
+        maxSingleNotePause = Mathf.Max(
+            minSingleNotePause,
+            maxSingleNotePause
+        );
 
-        firstNoteDelay =
-            Mathf.Max(
-                0f,
-                firstNoteDelay
-            );
+        burstStartEnemy = Mathf.Max(2, burstStartEnemy);
 
-        minSingleNotePause =
-            Mathf.Max(
-                0f,
-                minSingleNotePause
-            );
+        minNotesPerBurst = Mathf.Clamp(
+            minNotesPerBurst,
+            2,
+            4
+        );
 
-        maxSingleNotePause =
-            Mathf.Max(
-                minSingleNotePause,
-                maxSingleNotePause
-            );
+        maxNotesPerBurst = Mathf.Clamp(
+            maxNotesPerBurst,
+            minNotesPerBurst,
+            4
+        );
 
-        burstStartEnemy =
-            Mathf.Max(
-                2,
-                burstStartEnemy
-            );
+        minBurstNoteInterval = Mathf.Max(
+            0.12f,
+            minBurstNoteInterval
+        );
 
-        minNotesPerBurst =
-            Mathf.Clamp(
-                minNotesPerBurst,
-                2,
-                4
-            );
+        maxBurstNoteInterval = Mathf.Max(
+            minBurstNoteInterval,
+            maxBurstNoteInterval
+        );
 
-        maxNotesPerBurst =
-            Mathf.Clamp(
-                maxNotesPerBurst,
-                minNotesPerBurst,
-                4
-            );
+        minimumBurstReactionTime = Mathf.Max(
+            goodWindow + 0.1f,
+            minimumBurstReactionTime
+        );
 
-        minBurstNoteInterval =
-            Mathf.Max(
-                0.12f,
-                minBurstNoteInterval
-            );
+        minPauseBetweenBursts = Mathf.Max(
+            0f,
+            minPauseBetweenBursts
+        );
 
-        maxBurstNoteInterval =
-            Mathf.Max(
-                minBurstNoteInterval,
-                maxBurstNoteInterval
-            );
+        maxPauseBetweenBursts = Mathf.Max(
+            minPauseBetweenBursts,
+            maxPauseBetweenBursts
+        );
 
-        minimumBurstReactionTime =
-            Mathf.Max(
-                goodWindow + 0.1f,
-                minimumBurstReactionTime
-            );
+        noteTravelTime = Mathf.Max(
+            0.5f,
+            noteTravelTime
+        );
 
-        minPauseBetweenBursts =
-            Mathf.Max(
-                0f,
-                minPauseBetweenBursts
-            );
+        enemiesPerSpeedIncrease = Mathf.Max(
+            1,
+            enemiesPerSpeedIncrease
+        );
 
-        maxPauseBetweenBursts =
-            Mathf.Max(
-                minPauseBetweenBursts,
-                maxPauseBetweenBursts
-            );
+        travelTimeReductionPerTier = Mathf.Max(
+            0f,
+            travelTimeReductionPerTier
+        );
 
-        noteTravelTime =
-            Mathf.Max(
-                0.5f,
-                noteTravelTime
-            );
+        minimumNoteTravelTime = Mathf.Clamp(
+            minimumNoteTravelTime,
+            0.5f,
+            noteTravelTime
+        );
 
-        enemiesPerSpeedIncrease =
-            Mathf.Max(
-                1,
-                enemiesPerSpeedIncrease
-            );
+        countdownStepDuration = Mathf.Max(
+            0.05f,
+            countdownStepDuration
+        );
 
-        travelTimeReductionPerTier =
-            Mathf.Max(
-                0f,
-                travelTimeReductionPerTier
-            );
-
-        minimumNoteTravelTime =
-            Mathf.Clamp(
-                minimumNoteTravelTime,
-                0.5f,
-                noteTravelTime
-            );
-
-        countdownStepDuration =
-            Mathf.Max(
-                0.05f,
-                countdownStepDuration
-            );
-
-        goDuration =
-            Mathf.Max(
-                0.05f,
-                goDuration
-            );
+        goDuration = Mathf.Max(
+            0.05f,
+            goDuration
+        );
     }
 }
