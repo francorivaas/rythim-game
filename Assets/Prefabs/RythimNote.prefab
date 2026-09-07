@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 5013564648851128716}
   - component: {fileID: 3139261481986157333}
   - component: {fileID: 8753190195954015521}
+  - component: {fileID: 9025781886813810836}
   m_Layer: 5
   m_Name: RythimNote
   m_TagString: Untagged
@@ -92,10 +93,29 @@ MonoBehaviour:
   rectTransform: {fileID: 4261569177406051139}
   numberText: {fileID: 5009244973055570674}
   background: {fileID: 3139261481986157333}
+  canvasGroup: {fileID: 9025781886813810836}
   attack1Color: {r: 1, g: 0, b: 0, a: 1}
   attack2Color: {r: 0, g: 0, b: 1, a: 1}
   attack3Color: {r: 0, g: 1, b: 0, a: 1}
   attack4Color: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  goodDuration: 0.14
+  perfectDuration: 0.18
+  goodPopScale: 1.18
+  perfectPopScale: 1.32
+  errorDisappearDuration: 0.08
+  errorEndScale: 0.75
+--- !u!225 &9025781886813810836
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 547725083480286852}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &2955002442956625309
 GameObject:
   m_ObjectHideFlags: 0
@@ -108,6 +128,7 @@ GameObject:
   - component: {fileID: 6952226123081092860}
   - component: {fileID: 5009244973055570674}
   - component: {fileID: 8143909459854855475}
+  - component: {fileID: 1037852614174076673}
   m_Layer: 5
   m_Name: ButtonText
   m_TagString: Untagged
@@ -249,7 +270,26 @@ MonoBehaviour:
   rectTransform: {fileID: 4261569177406051139}
   numberText: {fileID: 5009244973055570674}
   background: {fileID: 3139261481986157333}
+  canvasGroup: {fileID: 0}
   attack1Color: {r: 1, g: 0, b: 0, a: 1}
   attack2Color: {r: 0, g: 0, b: 1, a: 1}
   attack3Color: {r: 0, g: 1, b: 0, a: 1}
   attack4Color: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  goodDuration: 0.14
+  perfectDuration: 0.18
+  goodPopScale: 1.18
+  perfectPopScale: 1.32
+  errorDisappearDuration: 0.08
+  errorEndScale: 0.75
+--- !u!225 &1037852614174076673
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2955002442956625309}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0

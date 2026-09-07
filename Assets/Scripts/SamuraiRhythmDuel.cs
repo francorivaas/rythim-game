@@ -44,6 +44,7 @@ public class SamuraiRhythmDuel : MonoBehaviour
     [SerializeField] private float wrongDamageToPlayer = 15f;
     [SerializeField] private float missDamageToPlayer = 10f;
 
+<<<<<<< Updated upstream
     // =====================================================
     // RHYTHM
     // =====================================================
@@ -72,9 +73,33 @@ public class SamuraiRhythmDuel : MonoBehaviour
     [Header("Timing Windows")]
 
     [Tooltip("Ventana PERFECT en segundos.")]
-    [SerializeField] private float perfectWindow = 0.07f;
+=======
+    [Header("Enemy 1 - Single Notes")]
+    [SerializeField] private float firstNoteDelay = 0.65f;
+    [SerializeField] private float minSingleNotePause = 0.45f;
+    [SerializeField] private float maxSingleNotePause = 0.90f;
 
-    [Tooltip("Ventana GOOD en segundos.")]
+    [Header("Bursts - Enemy 2+")]
+    [SerializeField] private int burstStartEnemy = 2;
+    [SerializeField] private int minNotesPerBurst = 2;
+    [SerializeField] private int maxNotesPerBurst = 4;
+    [SerializeField] private float minBurstNoteInterval = 0.38f;
+    [SerializeField] private float maxBurstNoteInterval = 0.48f;
+    [SerializeField] private float minimumBurstReactionTime = 0.75f;
+    [SerializeField] private float minPauseBetweenBursts = 0.45f;
+    [SerializeField] private float maxPauseBetweenBursts = 0.85f;
+
+    [Header("Progressive Difficulty")]
+    [SerializeField] private float noteTravelTime = 2.60f;
+    [SerializeField] private int enemiesPerSpeedIncrease = 2;
+    [SerializeField] private float travelTimeReductionPerTier = 0.12f;
+    [SerializeField] private float minimumNoteTravelTime = 2.00f;
+    [SerializeField] private TMP_Text enemyCounterText;
+    [SerializeField] private TMP_Text difficultyText;
+
+    [Header("Timing Windows")]
+>>>>>>> Stashed changes
+    [SerializeField] private float perfectWindow = 0.07f;
     [SerializeField] private float goodWindow = 0.16f;
 
     // =====================================================
@@ -84,13 +109,8 @@ public class SamuraiRhythmDuel : MonoBehaviour
     [Header("Rhythm Lane")]
 
     [SerializeField] private RectTransform notesContainer;
-
-    [Tooltip("Lugar donde aparecen las notas.")]
     [SerializeField] private RectTransform spawnPoint;
-
-    [Tooltip("Lugar exacto donde debemos tocar.")]
     [SerializeField] private RectTransform hitPoint;
-
     [SerializeField] private RhythmNoteView notePrefab;
 
     // =====================================================
@@ -115,9 +135,20 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
     [SerializeField] private float feedbackDuration = 0.5f;
 
+<<<<<<< Updated upstream
     // =====================================================
     // ROUND
     // =====================================================
+=======
+    [Header("Countdown")]
+    [SerializeField] private TMP_Text countdownText;
+    [SerializeField] private float countdownStepDuration = 0.8f;
+    [SerializeField] private float goDuration = 0.45f;
+>>>>>>> Stashed changes
+
+    [Header("Juiciness")]
+    [Tooltip("Controlador opcional de feedback visual. Si queda vacío, el gameplay sigue funcionando.")]
+    [SerializeField] private RhythmJuiceController juiceController;
 
     [Header("Round")]
 
@@ -129,8 +160,11 @@ public class SamuraiRhythmDuel : MonoBehaviour
     // =====================================================
 
     [Header("PC Debug")]
+<<<<<<< Updated upstream
 
     [Tooltip("Permite usar 1,2,3,4 en teclado.")]
+=======
+>>>>>>> Stashed changes
     [SerializeField] private bool enableKeyboardInput = true;
 
     // =====================================================
@@ -144,10 +178,19 @@ public class SamuraiRhythmDuel : MonoBehaviour
     private float restartTimer;
     private float feedbackTimer;
 
+<<<<<<< Updated upstream
+=======
+    private float countdownTimer;
+    private int countdownValue;
+
+    private int enemiesDefeated;
+    private float currentNoteTravelTime;
+    private float nextGroupSpawnTime;
+
+>>>>>>> Stashed changes
     private DuelState currentState;
 
-    private readonly List<NoteData> notes =
-        new List<NoteData>();
+    private readonly List<NoteData> notes = new List<NoteData>();
 
     // =====================================================
     // UNITY
@@ -169,6 +212,7 @@ public class SamuraiRhythmDuel : MonoBehaviour
             UpdateNotes();
             ProcessMissedNotes();
 
+<<<<<<< Updated upstream
             if (enableKeyboardInput)
             {
                 ReadKeyboardInput();
@@ -177,6 +221,23 @@ public class SamuraiRhythmDuel : MonoBehaviour
         else
         {
             UpdateFinishedDuel();
+=======
+                UpdateGroupGenerator();
+                UpdateNotes();
+
+                if (enableKeyboardInput)
+                {
+                    ReadKeyboardInput();
+                }
+
+                ProcessMissedNotes();
+                break;
+
+            case DuelState.Won:
+            case DuelState.Lost:
+                UpdateFinishedDuel();
+                break;
+>>>>>>> Stashed changes
         }
     }
 
@@ -193,6 +254,7 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
         duelTimer = 0f;
 
+<<<<<<< Updated upstream
         currentState = DuelState.Playing;
 
         UpdateHealthUI();
@@ -201,6 +263,88 @@ public class SamuraiRhythmDuel : MonoBehaviour
         feedbackTimer = 0f;
 
         GenerateInitialNotes();
+=======
+        UpdateDifficulty();
+        SetHealthUIImmediate();
+        UpdateProgressUI();
+
+        juiceController?.ResetVisuals();
+
+        if (feedbackText != null)
+        {
+            feedbackText.text = "";
+        }
+
+        feedbackTimer = 0f;
+
+        BeginCountdown();
+    }
+
+    // =====================================================
+    // COUNTDOWN
+    // =====================================================
+
+    private void BeginCountdown()
+    {
+        currentState = DuelState.Countdown;
+
+        countdownValue = 3;
+        countdownTimer = countdownStepDuration;
+
+        if (countdownText != null)
+        {
+            countdownText.gameObject.SetActive(true);
+            countdownText.text = "3";
+        }
+    }
+
+    private void UpdateCountdown()
+    {
+        countdownTimer -= Time.deltaTime;
+
+        if (countdownTimer > 0f)
+            return;
+
+        if (countdownValue > 1)
+        {
+            countdownValue--;
+            countdownTimer = countdownStepDuration;
+
+            if (countdownText != null)
+            {
+                countdownText.text = countdownValue.ToString();
+            }
+
+            return;
+        }
+
+        if (countdownValue == 1)
+        {
+            countdownValue = 0;
+            countdownTimer = goDuration;
+
+            if (countdownText != null)
+            {
+                countdownText.text = "¡YA!";
+            }
+
+            return;
+        }
+
+        StartGameplayAfterCountdown();
+    }
+
+    private void StartGameplayAfterCountdown()
+    {
+        if (countdownText != null)
+        {
+            countdownText.gameObject.SetActive(false);
+        }
+
+        duelTimer = 0f;
+        currentState = DuelState.Playing;
+        nextGroupSpawnTime = firstNoteDelay;
+>>>>>>> Stashed changes
     }
 
     // =====================================================
@@ -209,6 +353,7 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
     private void GenerateInitialNotes()
     {
+<<<<<<< Updated upstream
         float nextTime = firstNoteDelay;
 
         for (int i = 0; i < notesAhead; i++)
@@ -220,6 +365,46 @@ public class SamuraiRhythmDuel : MonoBehaviour
     }
 
     private void GenerateNextNote()
+=======
+        int safeEnemiesPerIncrease = Mathf.Max(1, enemiesPerSpeedIncrease);
+        int difficultyTier = enemiesDefeated / safeEnemiesPerIncrease;
+
+        currentNoteTravelTime = Mathf.Max(
+            minimumNoteTravelTime,
+            noteTravelTime - (difficultyTier * travelTimeReductionPerTier)
+        );
+    }
+
+    private void UpdateProgressUI()
+    {
+        int currentEnemy = enemiesDefeated + 1;
+
+        if (enemyCounterText != null)
+        {
+            enemyCounterText.text = $"ENEMIGO {currentEnemy}";
+        }
+
+        if (difficultyText != null)
+        {
+            int safeEnemiesPerIncrease = Mathf.Max(1, enemiesPerSpeedIncrease);
+            int difficultyTier = enemiesDefeated / safeEnemiesPerIncrease;
+
+            string generationMode =
+                currentEnemy >= burstStartEnemy
+                    ? $"RÁFAGA {minNotesPerBurst}-{maxNotesPerBurst}"
+                    : "SIMPLE";
+
+            difficultyText.text =
+                $"VEL. {difficultyTier + 1} | {currentNoteTravelTime:0.00}s | {generationMode}";
+        }
+    }
+
+    // =====================================================
+    // NOTE GROUP GENERATION
+    // =====================================================
+
+    private void UpdateGroupGenerator()
+>>>>>>> Stashed changes
     {
         float newTime;
 
@@ -235,19 +420,90 @@ public class SamuraiRhythmDuel : MonoBehaviour
             float lastTime =
                 notes[notes.Count - 1].targetTime;
 
+<<<<<<< Updated upstream
             newTime =
                 lastTime +
                 GetRandomInterval();
         }
 
         CreateScheduledNote(newTime);
+=======
+    private void SpawnSingleNoteGroup()
+    {
+        float targetTime = duelTimer + currentNoteTravelTime;
+
+        CreateAndSpawnNote(targetTime);
+
+        float pause = Random.Range(
+            minSingleNotePause,
+            maxSingleNotePause
+        );
+
+        nextGroupSpawnTime = targetTime + pause;
+    }
+
+    private void SpawnBurstGroup()
+    {
+        int amount = Random.Range(
+            minNotesPerBurst,
+            maxNotesPerBurst + 1
+        );
+
+        amount = Mathf.Clamp(amount, 2, 4);
+
+        float configuredInterval = Random.Range(
+            minBurstNoteInterval,
+            maxBurstNoteInterval
+        );
+
+        float maxSafeInterval = configuredInterval;
+
+        if (amount > 1)
+        {
+            maxSafeInterval =
+                (currentNoteTravelTime - minimumBurstReactionTime) /
+                (amount - 1);
+
+            maxSafeInterval = Mathf.Max(0.12f, maxSafeInterval);
+        }
+
+        float burstInterval = Mathf.Min(
+            configuredInterval,
+            maxSafeInterval
+        );
+
+        for (int i = 0; i < amount; i++)
+        {
+            int notesAfterThis = amount - 1 - i;
+
+            float targetTime =
+                duelTimer +
+                currentNoteTravelTime -
+                (notesAfterThis * burstInterval);
+
+            CreateAndSpawnNote(targetTime);
+        }
+
+        float lastTargetTime = duelTimer + currentNoteTravelTime;
+
+        float pause = Random.Range(
+            minPauseBetweenBursts,
+            maxPauseBetweenBursts
+        );
+
+        nextGroupSpawnTime = lastTargetTime + pause;
+>>>>>>> Stashed changes
     }
 
     private void CreateScheduledNote(float targetTime)
     {
-        NoteData note =
-            new NoteData();
+        NoteData note = new NoteData
+        {
+            targetTime = targetTime,
+            attackType = (AttackType)Random.Range(1, 5)
+        };
 
+<<<<<<< Updated upstream
         note.targetTime = targetTime;
 
         note.attackType =
@@ -311,9 +567,53 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
         newView.Setup(
             note.attackType
+=======
+        RhythmNoteView newView = Instantiate(
+            notePrefab,
+            notesContainer
+>>>>>>> Stashed changes
         );
 
+        newView.Setup(note.attackType);
+
         note.view = newView;
+<<<<<<< Updated upstream
+=======
+
+        notes.Add(note);
+
+        notes.Sort(
+            (a, b) => a.targetTime.CompareTo(b.targetTime)
+        );
+
+        UpdateSingleNotePosition(note);
+    }
+
+    private void UpdateNotes()
+    {
+        for (int i = 0; i < notes.Count; i++)
+        {
+            UpdateSingleNotePosition(notes[i]);
+        }
+    }
+
+    private void UpdateSingleNotePosition(NoteData note)
+    {
+        if (note.view == null)
+            return;
+
+        float timeUntilHit = note.targetTime - duelTimer;
+
+        float progress =
+            1f -
+            (timeUntilHit / currentNoteTravelTime);
+
+        note.view.SetPosition(
+            spawnPoint.anchoredPosition,
+            hitPoint.anchoredPosition,
+            progress
+        );
+>>>>>>> Stashed changes
     }
 
     // =====================================================
@@ -342,17 +642,22 @@ public class SamuraiRhythmDuel : MonoBehaviour
         float absoluteOffset =
             Mathf.Abs(timingOffset);
 
+<<<<<<< Updated upstream
         // -------------------------------------
         // TOO EARLY
         // -------------------------------------
 
+=======
+        // EARLY
+>>>>>>> Stashed changes
         if (timingOffset < -goodWindow)
         {
-            DamagePlayer(
-                earlyDamageToPlayer
-            );
+            ConsumeCurrentNoteError();
+
+            DamagePlayer(earlyDamageToPlayer);
 
             ShowFeedback("EARLY!");
+<<<<<<< Updated upstream
 
             ConsumeCurrentNote();
 
@@ -367,12 +672,21 @@ public class SamuraiRhythmDuel : MonoBehaviour
             pressedAttack !=
             currentNote.attackType
         )
+=======
+            juiceController?.PlayErrorFeedback();
+            return;
+        }
+
+        // WRONG
+        if (pressedAttack != currentNote.attackType)
+>>>>>>> Stashed changes
         {
-            DamagePlayer(
-                wrongDamageToPlayer
-            );
+            ConsumeCurrentNoteError();
+
+            DamagePlayer(wrongDamageToPlayer);
 
             ShowFeedback("WRONG!");
+<<<<<<< Updated upstream
 
             ConsumeCurrentNote();
 
@@ -387,11 +701,20 @@ public class SamuraiRhythmDuel : MonoBehaviour
             absoluteOffset <=
             perfectWindow
         )
-        {
-            DamageEnemy(
-                perfectDamage
-            );
+=======
+            juiceController?.PlayErrorFeedback();
+            return;
+        }
 
+        // PERFECT
+        if (absoluteOffset <= perfectWindow)
+>>>>>>> Stashed changes
+        {
+            ConsumeCurrentNoteSuccess(true);
+
+            DamageEnemy(perfectDamage, true);
+
+<<<<<<< Updated upstream
             ShowFeedback(
                 "PERFECT!"
             );
@@ -409,11 +732,21 @@ public class SamuraiRhythmDuel : MonoBehaviour
             absoluteOffset <=
             goodWindow
         )
-        {
-            DamageEnemy(
-                goodDamage
-            );
+=======
+            ShowFeedback("PERFECT!");
+            juiceController?.PlayPerfectFeedback();
+            return;
+        }
 
+        // GOOD
+        if (absoluteOffset <= goodWindow)
+>>>>>>> Stashed changes
+        {
+            ConsumeCurrentNoteSuccess(false);
+
+            DamageEnemy(goodDamage, false);
+
+<<<<<<< Updated upstream
             ShowFeedback(
                 "GOOD!"
             );
@@ -434,6 +767,20 @@ public class SamuraiRhythmDuel : MonoBehaviour
         ShowFeedback("MISS!");
 
         ConsumeCurrentNote();
+=======
+            ShowFeedback("GOOD!");
+            juiceController?.PlayGoodFeedback();
+            return;
+        }
+
+        // LATE
+        ConsumeCurrentNoteError();
+
+        DamagePlayer(missDamageToPlayer);
+
+        ShowFeedback("MISS!");
+        juiceController?.PlayErrorFeedback();
+>>>>>>> Stashed changes
     }
 
     // =====================================================
@@ -451,11 +798,12 @@ public class SamuraiRhythmDuel : MonoBehaviour
             DuelState.Playing
         )
         {
-            DamagePlayer(
-                missDamageToPlayer
-            );
+            ConsumeCurrentNoteError();
+
+            DamagePlayer(missDamageToPlayer);
 
             ShowFeedback("MISS!");
+<<<<<<< Updated upstream
 
             ConsumeCurrentNote();
         }
@@ -466,46 +814,78 @@ public class SamuraiRhythmDuel : MonoBehaviour
     // =====================================================
 
     private void ConsumeCurrentNote()
+=======
+            juiceController?.PlayErrorFeedback();
+        }
+    }
+
+    private void ConsumeCurrentNoteSuccess(bool perfect)
+>>>>>>> Stashed changes
     {
         if (notes.Count == 0)
             return;
 
-        NoteData note =
-            notes[0];
+        NoteData note = notes[0];
+        notes.RemoveAt(0);
 
         if (note.view != null)
         {
-            Destroy(
-                note.view.gameObject
-            );
+            note.view.PlaySuccessAndDestroy(perfect);
         }
+    }
 
+    private void ConsumeCurrentNoteError()
+    {
+        if (notes.Count == 0)
+            return;
+
+        NoteData note = notes[0];
         notes.RemoveAt(0);
 
+<<<<<<< Updated upstream
         if (
             currentState ==
             DuelState.Playing
         )
         {
             GenerateNextNote();
+=======
+        if (note.view != null)
+        {
+            note.view.PlayErrorAndDestroy();
+>>>>>>> Stashed changes
         }
     }
 
     // =====================================================
+<<<<<<< Updated upstream
     // DAMAGE
+=======
+    // DAMAGE / HEALTH
+>>>>>>> Stashed changes
     // =====================================================
 
-    private void DamageEnemy(float damage)
+    private void DamageEnemy(float damage, bool perfect)
     {
         enemyHealth -= damage;
+        enemyHealth = Mathf.Max(enemyHealth, 0f);
 
-        enemyHealth =
-            Mathf.Max(
-                enemyHealth,
-                0f
+        if (juiceController != null)
+        {
+            juiceController.AnimateHealth(
+                enemyHealthSlider,
+                enemyHealth
             );
 
-        UpdateHealthUI();
+            juiceController.PlayEnemyDamage(
+                damage,
+                perfect
+            );
+        }
+        else
+        {
+            SetSliderValue(enemyHealthSlider, enemyHealth);
+        }
 
         if (enemyHealth <= 0f)
         {
@@ -516,14 +896,23 @@ public class SamuraiRhythmDuel : MonoBehaviour
     private void DamagePlayer(float damage)
     {
         playerHealth -= damage;
+        playerHealth = Mathf.Max(playerHealth, 0f);
 
-        playerHealth =
-            Mathf.Max(
-                playerHealth,
-                0f
+        if (juiceController != null)
+        {
+            juiceController.AnimateHealth(
+                playerHealthSlider,
+                playerHealth
             );
 
-        UpdateHealthUI();
+            juiceController.PlayPlayerDamage(
+                damage
+            );
+        }
+        else
+        {
+            SetSliderValue(playerHealthSlider, playerHealth);
+        }
 
         if (playerHealth <= 0f)
         {
@@ -531,6 +920,7 @@ public class SamuraiRhythmDuel : MonoBehaviour
         }
     }
 
+<<<<<<< Updated upstream
     // =====================================================
     // HEALTH UI
     // =====================================================
@@ -564,15 +954,65 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
     // =====================================================
     // RESULT
+=======
+    private void SetHealthUIImmediate()
+    {
+        if (playerHealthSlider != null)
+        {
+            playerHealthSlider.maxValue = playerMaxHealth;
+        }
+
+        if (enemyHealthSlider != null)
+        {
+            enemyHealthSlider.maxValue = enemyMaxHealth;
+        }
+
+        if (juiceController != null)
+        {
+            juiceController.SetHealthImmediate(
+                playerHealthSlider,
+                playerHealth
+            );
+
+            juiceController.SetHealthImmediate(
+                enemyHealthSlider,
+                enemyHealth
+            );
+        }
+        else
+        {
+            SetSliderValue(playerHealthSlider, playerHealth);
+            SetSliderValue(enemyHealthSlider, enemyHealth);
+        }
+    }
+
+    private void SetSliderValue(Slider slider, float value)
+    {
+        if (slider != null)
+        {
+            slider.value = value;
+        }
+    }
+
+    // =====================================================
+    // RESULTS
+>>>>>>> Stashed changes
     // =====================================================
 
     private void WinDuel()
     {
+<<<<<<< Updated upstream
         currentState =
             DuelState.Won;
 
         restartTimer =
             restartDelay;
+=======
+        enemiesDefeated++;
+
+        currentState = DuelState.Won;
+        restartTimer = restartDelay;
+>>>>>>> Stashed changes
 
         ShowFeedback(
             "VICTORY!"
@@ -581,11 +1021,8 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
     private void LoseDuel()
     {
-        currentState =
-            DuelState.Lost;
-
-        restartTimer =
-            restartDelay;
+        currentState = DuelState.Lost;
+        restartTimer = restartDelay;
 
         ShowFeedback(
             "DEFEAT!"
@@ -597,8 +1034,7 @@ public class SamuraiRhythmDuel : MonoBehaviour
         if (!autoRestart)
             return;
 
-        restartTimer -=
-            Time.deltaTime;
+        restartTimer -= Time.deltaTime;
 
         if (restartTimer <= 0f)
         {
@@ -607,21 +1043,16 @@ public class SamuraiRhythmDuel : MonoBehaviour
     }
 
     // =====================================================
-    // FEEDBACK
+    // FEEDBACK TEXT
     // =====================================================
 
-    private void ShowFeedback(
-        string message
-    )
+    private void ShowFeedback(string message)
     {
         if (feedbackText == null)
             return;
 
-        feedbackText.text =
-            message;
-
-        feedbackTimer =
-            feedbackDuration;
+        feedbackText.text = message;
+        feedbackTimer = feedbackDuration;
     }
 
     private void UpdateFeedback()
@@ -629,10 +1060,9 @@ public class SamuraiRhythmDuel : MonoBehaviour
         if (feedbackTimer <= 0f)
             return;
 
-        feedbackTimer -=
-            Time.deltaTime;
+        feedbackTimer -= Time.deltaTime;
 
-        if (feedbackTimer <= 0f)
+        if (feedbackTimer <= 0f && feedbackText != null)
         {
             feedbackText.text = "";
         }
@@ -647,48 +1077,24 @@ public class SamuraiRhythmDuel : MonoBehaviour
         if (Keyboard.current == null)
             return;
 
-        if (
-            Keyboard.current
-            .digit1Key
-            .wasPressedThisFrame
-        )
+        if (Keyboard.current.digit1Key.wasPressedThisFrame)
         {
-            PressAttack(
-                AttackType.Attack1
-            );
+            PressAttack(AttackType.Attack1);
         }
 
-        if (
-            Keyboard.current
-            .digit2Key
-            .wasPressedThisFrame
-        )
+        if (Keyboard.current.digit2Key.wasPressedThisFrame)
         {
-            PressAttack(
-                AttackType.Attack2
-            );
+            PressAttack(AttackType.Attack2);
         }
 
-        if (
-            Keyboard.current
-            .digit3Key
-            .wasPressedThisFrame
-        )
+        if (Keyboard.current.digit3Key.wasPressedThisFrame)
         {
-            PressAttack(
-                AttackType.Attack3
-            );
+            PressAttack(AttackType.Attack3);
         }
 
-        if (
-            Keyboard.current
-            .digit4Key
-            .wasPressedThisFrame
-        )
+        if (Keyboard.current.digit4Key.wasPressedThisFrame)
         {
-            PressAttack(
-                AttackType.Attack4
-            );
+            PressAttack(AttackType.Attack4);
         }
     }
 
@@ -702,9 +1108,7 @@ public class SamuraiRhythmDuel : MonoBehaviour
         {
             if (note.view != null)
             {
-                Destroy(
-                    note.view.gameObject
-                );
+                Destroy(note.view.gameObject);
             }
         }
 
@@ -717,30 +1121,21 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
     private void OnValidate()
     {
-        playerMaxHealth =
-            Mathf.Max(
-                1f,
-                playerMaxHealth
-            );
+        playerMaxHealth = Mathf.Max(1f, playerMaxHealth);
+        enemyMaxHealth = Mathf.Max(1f, enemyMaxHealth);
 
-        enemyMaxHealth =
-            Mathf.Max(
-                1f,
-                enemyMaxHealth
-            );
+        perfectWindow = Mathf.Max(0.01f, perfectWindow);
+        goodWindow = Mathf.Max(perfectWindow, goodWindow);
 
-        perfectWindow =
-            Mathf.Max(
-                0.01f,
-                perfectWindow
-            );
+        firstNoteDelay = Mathf.Max(0f, firstNoteDelay);
 
-        goodWindow =
-            Mathf.Max(
-                perfectWindow,
-                goodWindow
-            );
+        minSingleNotePause = Mathf.Max(0f, minSingleNotePause);
+        maxSingleNotePause = Mathf.Max(
+            minSingleNotePause,
+            maxSingleNotePause
+        );
 
+<<<<<<< Updated upstream
         minNoteInterval =
             Mathf.Max(
                 goodWindow * 2.2f,
@@ -764,5 +1159,76 @@ public class SamuraiRhythmDuel : MonoBehaviour
                 2,
                 notesAhead
             );
+=======
+        burstStartEnemy = Mathf.Max(2, burstStartEnemy);
+
+        minNotesPerBurst = Mathf.Clamp(
+            minNotesPerBurst,
+            2,
+            4
+        );
+
+        maxNotesPerBurst = Mathf.Clamp(
+            maxNotesPerBurst,
+            minNotesPerBurst,
+            4
+        );
+
+        minBurstNoteInterval = Mathf.Max(
+            0.12f,
+            minBurstNoteInterval
+        );
+
+        maxBurstNoteInterval = Mathf.Max(
+            minBurstNoteInterval,
+            maxBurstNoteInterval
+        );
+
+        minimumBurstReactionTime = Mathf.Max(
+            goodWindow + 0.1f,
+            minimumBurstReactionTime
+        );
+
+        minPauseBetweenBursts = Mathf.Max(
+            0f,
+            minPauseBetweenBursts
+        );
+
+        maxPauseBetweenBursts = Mathf.Max(
+            minPauseBetweenBursts,
+            maxPauseBetweenBursts
+        );
+
+        noteTravelTime = Mathf.Max(
+            0.5f,
+            noteTravelTime
+        );
+
+        enemiesPerSpeedIncrease = Mathf.Max(
+            1,
+            enemiesPerSpeedIncrease
+        );
+
+        travelTimeReductionPerTier = Mathf.Max(
+            0f,
+            travelTimeReductionPerTier
+        );
+
+        minimumNoteTravelTime = Mathf.Clamp(
+            minimumNoteTravelTime,
+            0.5f,
+            noteTravelTime
+        );
+
+        countdownStepDuration = Mathf.Max(
+            0.05f,
+            countdownStepDuration
+        );
+
+        goDuration = Mathf.Max(
+            0.05f,
+            goDuration
+        );
+>>>>>>> Stashed changes
     }
 }
