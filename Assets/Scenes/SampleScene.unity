@@ -450,19 +450,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 190725235}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 190725237}
-        m_TargetAssemblyTypeName: AttackButtonUI, Assembly-CSharp
-        m_MethodName: Press
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &190725235
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -707,21 +695,9 @@ MonoBehaviour:
   earlyDamageToPlayer: 15
   wrongDamageToPlayer: 15
   missDamageToPlayer: 10
-  firstNoteDelay: 2
-  minSingleNotePause: 0.45
-  maxSingleNotePause: 0.9
-  burstStartEnemy: 2
-  minNotesPerBurst: 2
-  maxNotesPerBurst: 4
-  minBurstNoteInterval: 0.38
-  maxBurstNoteInterval: 0.48
+  difficultyCurve: []
   minimumBurstReactionTime: 0.75
-  minPauseBetweenBursts: 0.45
-  maxPauseBetweenBursts: 0.85
-  noteTravelTime: 2
-  enemiesPerSpeedIncrease: 2
-  travelTimeReductionPerTier: 0.12
-  minimumNoteTravelTime: 2
+  firstGroupDelay: 0.65
   enemyCounterText: {fileID: 0}
   difficultyText: {fileID: 0}
   perfectWindow: 0.07
@@ -1083,7 +1059,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_BackGroundColor: {r: 0.3594518, g: 0.3884281, b: 0.4339623, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -1481,19 +1457,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 728597526}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 728597528}
-        m_TargetAssemblyTypeName: AttackButtonUI, Assembly-CSharp
-        m_MethodName: Press
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &728597526
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1670,19 +1634,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 981577365}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 981577367}
-        m_TargetAssemblyTypeName: AttackButtonUI, Assembly-CSharp
-        m_MethodName: Press
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &981577365
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2499,19 +2451,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1471508593}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1471508595}
-        m_TargetAssemblyTypeName: AttackButtonUI, Assembly-CSharp
-        m_MethodName: Press
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &1471508593
 MonoBehaviour:
   m_ObjectHideFlags: 0
