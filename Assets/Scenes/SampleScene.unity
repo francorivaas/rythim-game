@@ -716,6 +716,7 @@ MonoBehaviour:
   juiceController: {fileID: 553136900}
   autoRestart: 1
   restartDelay: 2
+  victoryRevealDelay: 0.35
   enableKeyboardInput: 1
 --- !u!1 &464953908
 GameObject:

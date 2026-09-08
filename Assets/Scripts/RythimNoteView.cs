@@ -28,6 +28,13 @@ public class RhythmNoteView : MonoBehaviour
     [SerializeField] private float errorDisappearDuration = 0.08f;
     [SerializeField] private float errorEndScale = 0.75f;
 
+    [Header("Combat End / Cancelled")]
+    [Tooltip("Fade neutro usado cuando el duelo termina y todavía quedan notas activas.")]
+    [SerializeField] private float cancelledDuration = 0.20f;
+
+    [Tooltip("Escala final sutil. No hace pop porque la nota no fue acertada.")]
+    [SerializeField] private float cancelledEndScale = 0.90f;
+
     private Vector3 baseScale;
     private bool resolving;
 
@@ -127,6 +134,18 @@ public class RhythmNoteView : MonoBehaviour
         );
     }
 
+    public void PlayCancelledAndDestroy()
+    {
+        if (resolving)
+            return;
+
+        resolving = true;
+
+        StartCoroutine(
+            CancelledRoutine()
+        );
+    }
+
     private IEnumerator SuccessRoutine(bool perfect)
     {
         float duration =
@@ -206,6 +225,60 @@ public class RhythmNoteView : MonoBehaviour
             {
                 canvasGroup.alpha =
                     1f - t;
+            }
+
+            yield return null;
+        }
+
+        Destroy(gameObject);
+    }
+
+    private IEnumerator CancelledRoutine()
+    {
+        float elapsed = 0f;
+
+        Vector3 startScale =
+            rectTransform.localScale;
+
+        float startAlpha =
+            canvasGroup != null
+                ? canvasGroup.alpha
+                : 1f;
+
+        while (
+            elapsed <
+            cancelledDuration
+        )
+        {
+            elapsed +=
+                Time.unscaledDeltaTime;
+
+            float t =
+                Mathf.Clamp01(
+                    elapsed /
+                    cancelledDuration
+                );
+
+            /*
+             * Fade simple y neutro:
+             * no pop, no shake, no feedback de acierto/error.
+             */
+            rectTransform.localScale =
+                Vector3.Lerp(
+                    startScale,
+                    baseScale *
+                    cancelledEndScale,
+                    t
+                );
+
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha =
+                    Mathf.Lerp(
+                        startAlpha,
+                        0f,
+                        t
+                    );
             }
 
             yield return null;

@@ -177,6 +177,9 @@ public class SamuraiRhythmDuel : MonoBehaviour
     [SerializeField] private bool autoRestart = true;
     [SerializeField] private float restartDelay = 2f;
 
+    [Tooltip("Pequeña pausa después del golpe mortal antes de mostrar VICTORY.")]
+    [SerializeField] private float victoryRevealDelay = 0.35f;
+
     // =====================================================
     // DEBUG INPUT
     // =====================================================
@@ -197,6 +200,9 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
     private float countdownTimer;
     private int countdownValue;
+
+    private float victoryRevealTimer;
+    private bool victoryMessageShown;
 
     private int enemiesDefeated;
     private float nextGroupSpawnTime;
@@ -264,6 +270,9 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
         duelTimer = 0f;
         nextGroupSpawnTime = 0f;
+
+        victoryRevealTimer = 0f;
+        victoryMessageShown = false;
 
         UpdateDifficultyForCurrentEnemy();
         SetHealthUIImmediate();
@@ -1141,26 +1150,53 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
     private void WinDuel()
     {
+        // Evita ejecutar dos veces la victoria en el mismo frame.
+        if (currentState == DuelState.Won)
+            return;
+
         enemiesDefeated++;
 
+        /*
+         * Bloqueamos el gameplay inmediatamente.
+         * De esta forma ningún input posterior puede afectar
+         * las notas que quedaban en la ráfaga.
+         */
         currentState =
             DuelState.Won;
 
         restartTimer =
             restartDelay;
 
-        ShowFeedback(
-            "VICTORY!"
-        );
+        victoryRevealTimer =
+            victoryRevealDelay;
+
+        victoryMessageShown =
+            false;
+
+        /*
+         * Las notas restantes ya no son GOOD, PERFECT ni MISS:
+         * el combate terminó. Se cancelan visualmente con un
+         * fade neutro y se eliminan de la lista lógica.
+         */
+        CancelPendingNotes();
     }
 
     private void LoseDuel()
     {
+        if (currentState == DuelState.Lost)
+            return;
+
         currentState =
             DuelState.Lost;
 
         restartTimer =
             restartDelay;
+
+        /*
+         * También limpiamos notas pendientes al morir el jugador,
+         * evitando que queden congeladas durante DEFEAT.
+         */
+        CancelPendingNotes();
 
         ShowFeedback(
             "DEFEAT!"
@@ -1169,6 +1205,30 @@ public class SamuraiRhythmDuel : MonoBehaviour
 
     private void UpdateFinishedDuel()
     {
+        /*
+         * En victoria dejamos respirar el golpe final antes de
+         * mostrar el mensaje. Esto ocurre aunque Auto Restart
+         * esté desactivado.
+         */
+        if (
+            currentState == DuelState.Won &&
+            !victoryMessageShown
+        )
+        {
+            victoryRevealTimer -=
+                Time.deltaTime;
+
+            if (victoryRevealTimer <= 0f)
+            {
+                victoryMessageShown =
+                    true;
+
+                ShowFeedback(
+                    "VICTORY!"
+                );
+            }
+        }
+
         if (!autoRestart)
             return;
 
@@ -1181,6 +1241,36 @@ public class SamuraiRhythmDuel : MonoBehaviour
         {
             StartDuel();
         }
+    }
+
+    private void CancelPendingNotes()
+    {
+        if (notes.Count == 0)
+            return;
+
+        /*
+         * No usamos ConsumeCurrentNoteError/Success porque estas
+         * notas no fueron acertadas ni falladas. Son simplemente
+         * canceladas por el fin del combate.
+         */
+        for (int i = 0; i < notes.Count; i++)
+        {
+            NoteData note =
+                notes[i];
+
+            if (note.view != null)
+            {
+                note.view
+                    .PlayCancelledAndDestroy();
+            }
+        }
+
+        /*
+         * Es importante vaciar la lista inmediatamente.
+         * Aunque el fade visual dure unas décimas, a nivel de
+         * gameplay ya no existe ninguna nota pendiente.
+         */
+        notes.Clear();
     }
 
     // =====================================================
@@ -1544,6 +1634,12 @@ public class SamuraiRhythmDuel : MonoBehaviour
             Mathf.Max(
                 0.05f,
                 goDuration
+            );
+
+        victoryRevealDelay =
+            Mathf.Max(
+                0f,
+                victoryRevealDelay
             );
 
         if (difficultyCurve == null)
